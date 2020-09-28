@@ -2,12 +2,11 @@ FHT_parametric_survival <- function(time, mu, y0) {
   return(pnorm((mu*time + y0)/sqrt(time)) - exp(-2*y0*mu)*pnorm((mu*time - y0)/sqrt(time)))
 }
 
-brier_score <- function(ts, deltas, censoring_estimates, t_star, estimated_survival_t_star) {
+brier_score <- function(ts, deltas, censoring_estimates, t_star, censoring_estimate_t_star, estimated_survival_t_star) {
   ### ts, deltas, censoring_estimated are vectors where index i of each vector correspond to observation i
   before_or_at <- ts <= t_star
   after <- ts > t_star
   before_or_at_and_observed <- before_or_at * deltas
-  censoring_estimate_t_star <- censoring_estimates[i]
   left_term <- ((estimated_survival_t_star^2)*before_or_at_and_observed)/censoring_estimates
   right_term <- ((1-estimated_survival_t_star)^2*after)/censoring_estimate_t_star
   return(mean(left_term + right_term))
@@ -60,7 +59,7 @@ brier_score_many_observations_fht <- function(times, delta, y0s, mus) {
       ts=times,
       deltas=delta,
       censoring_estimates=censoring_estimates,
-      t_star=current_time,
+      t_star=times[i],
       estimated_survival_t_star=estimated_survival_probabilities[, i]
     )
   }
@@ -77,22 +76,23 @@ brier_score_many_observations <- function(times, delta, estimated_survival_proba
   censoring_estimates <- sapply(times, function(time) {
     kaplan_meier_estimate_of_censoring(time, times, delta)
   })
-  n <- length(times)
   
   # Drop the last observation
+  n <- length(times)
   times <- times[-n]
   delta <- delta[-n]
   censoring_estimates <- censoring_estimates[-n]
   estimated_survival_probabilities <- estimated_survival_probabilities[-n, -n]
-  N <- length(times)
   
+  N <- length(times)
   brier_scores <- rep(NA, N)
   for (i in 1:N) {
     brier_scores[i] <- brier_score(
       ts=times,
       deltas=delta,
       censoring_estimates=censoring_estimates,
-      t_star=current_time,
+      t_star=times[i],
+      censoring_estimate_t_star=censoring_estimates[i],
       estimated_survival_t_star=estimated_survival_probabilities[, i]
     )
   }
@@ -100,4 +100,3 @@ brier_score_many_observations <- function(times, delta, estimated_survival_proba
     data.frame(times=times, brier_scores=brier_scores)
   )
 }
-
