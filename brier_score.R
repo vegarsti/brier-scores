@@ -30,7 +30,7 @@ kaplan_meier_estimate_of_censoring <- function(time, times, delta) {
 }
 
 
-brier_score_many_observations_fht <- function(times, delta, y0s, mus) {
+brier_scores_fht <- function(times, delta, y0s, mus) {
   # Assumes these are vectors, where index i correspond to observation i for each vector
   # Assumes times are sorted by time ascending
   censoring_estimates <- sapply(times, function(time) {
@@ -60,6 +60,7 @@ brier_score_many_observations_fht <- function(times, delta, y0s, mus) {
       deltas=delta,
       censoring_estimates=censoring_estimates,
       t_star=times[i],
+      censoring_estimate_t_star=censoring_estimates[i],
       estimated_survival_t_star=estimated_survival_probabilities[, i]
     )
   }
@@ -68,7 +69,7 @@ brier_score_many_observations_fht <- function(times, delta, y0s, mus) {
   )
 }
 
-brier_score_many_observations <- function(times, delta, estimated_survival_probabilities) {
+brier_scores <- function(times, delta, estimated_survival_probabilities) {
   # Assumes times and delta are vectors, where index i correspond to observation i for each vector
   # Assumes times are sorted by time ascending
   # Assumes estimated_survival_probabilities is a matrix of estimated survival probabilities,
